@@ -3,6 +3,55 @@
 Módulo de gestión del catálogo HTML persistente de NurUI (o librería equivalente).
 Los previews efímeros por componente no existen — cada adición actualiza el catálogo completo.
 
+## Prerrequisitos (verificar antes de cualquier compilación)
+
+Ejecutar este check antes de cualquier paso que use `esbuild` (Paso 3.5, `--rebuild`, primer `--view` sin catálogo existente).
+
+```bash
+# 1. Node.js disponible?
+node --version > /dev/null 2>&1
+NODE_OK=$?
+
+# 2. esbuild disponible vía npx?
+npx esbuild --version > /dev/null 2>&1
+ESBUILD_OK=$?
+```
+
+| Resultado | Acción |
+|-----------|--------|
+| `NODE_OK=0` y `ESBUILD_OK=0` | Continuar normalmente |
+| `NODE_OK≠0` | Detener. Mostrar mensaje y salir |
+| `NODE_OK=0` y `ESBUILD_OK≠0` | Detener. Mostrar mensaje y salir |
+
+### Mensajes de error
+
+**Node.js no encontrado:**
+```
+✗ Node.js no está instalado o no está en el PATH.
+
+  El catálogo existente (catalog.html) sigue funcionando en el navegador.
+  Para agregar o actualizar componentes necesitas Node.js:
+
+    → https://nodejs.org  (LTS recomendado)
+
+  Después de instalar, vuelve a ejecutar el comando.
+```
+
+**esbuild no disponible:**
+```
+✗ esbuild no está disponible via npx.
+
+  El catálogo existente (catalog.html) sigue funcionando en el navegador.
+  Para compilar el catálogo necesitas esbuild:
+
+    npm install -g esbuild        ← instalación global
+    npx esbuild --version         ← verificar
+
+  Después de instalar, vuelve a ejecutar el comando.
+```
+
+**Nota:** si `catalog.html` y los bundles ya existen (sistema nuevo que clonó el repo), el catálogo es 100% funcional sin Node. El check de prerrequisitos solo aplica cuando se intenta compilar.
+
 ## Arquitectura del catálogo (3 optimizaciones aplicadas)
 
 ```
