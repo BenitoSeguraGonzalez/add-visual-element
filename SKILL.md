@@ -18,6 +18,82 @@ add-visual-element/
 └── enforce.md     ← enforcement registry, refactor quirúrgico, auditoría
 ```
 
+## Sin argumentos — README de uso
+
+Cuando el skill se invoca sin argumentos (`/add-visual-element` solo), mostrar este bloque exacto como respuesta, completando las secciones dinámicas leyendo `manifest.json` y `vault.json`:
+
+---
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  add-visual-element  ·  Gestor de librería de componentes    ║
+╚══════════════════════════════════════════════════════════════╝
+
+  Ingesta CSS/HTML → componente React tipado, catalogado y
+  documentado. Soporta vault global ↔ proyectos locales.
+```
+
+### Catálogo y visualización
+
+| Comando | Qué hace |
+|---------|----------|
+| `/add-visual-element --view` | Abre el catálogo del proyecto (file://, sin servidor) |
+| `/add-visual-element --view --scope global` | Abre el vault global |
+| `/add-visual-element --rebuild` | Recompila todos los componentes y regenera el catálogo |
+| `/add-visual-element --rebuild --scope global` | Rebuild del vault global |
+
+### Agregar componentes
+
+| Comando | Qué hace |
+|---------|----------|
+| `/add-visual-element <URL>` | Extrae el CSS/HTML de la URL y abre el pipeline |
+| `/add-visual-element <código pegado>` | Usa el snippet directamente |
+| `/add-visual-element <descripción>` | Crea el componente desde cero (ej: "creame un KPI card") |
+| añadir `--scope global` | Guarda en el vault global en vez del proyecto local |
+
+El pipeline hace: interceptar → detectar ecosistema → extraer código → clarificar (nombre / categoría / variantes) → crear `.tsx` → actualizar catálogo → indexar barrel → documentar.
+
+### Gestión del vault global ↔ local
+
+| Comando | Qué hace |
+|---------|----------|
+| `/add-visual-element --check` | Compara hashes locales vs vault — detecta componentes desactualizados |
+| `/add-visual-element --preview <Nombre>` | Preview individual con todos los escenarios/variantes |
+
+**Vault global** — `~/.claude/nur-ui/` — almacén de componentes reutilizables entre proyectos.
+Un componente global nunca se usa directamente: siempre se copia al proyecto con metadata de origen (`source=global hash=... copied=...`).
+
+### Catálogo optimizado (arquitectura actual)
+
+```
+previews/
+  catalog.react.js   ← React runtime ~190KB — se compila UNA VEZ
+  catalog.app.js     ← componentes ~29KB    — se recompila por cada cambio
+catalog.html         ← abre con file://, sin servidor HTTP
+```
+
+Añadir un componente recompila solo `catalog.app.js` (no React). ~7.5x más rápido que un bundle monolítico.
+`catalog.app.entry.tsx` usa marcadores `@nur-ui:start/end` para inserciones incrementales (no full-rewrite).
+Skip por hash: si el archivo del componente no cambió, se omite el paso esbuild.
+
+---
+
+**Estado del proyecto actual** (leer `manifest.json` → `vault.json` y completar):
+
+```
+Proyecto local
+  Librería : <LIB_NAME> en <LIB_DIR>
+  Componentes : <N> componentes · <C> categorías
+  Catálogo : <existe / no existe>
+  Último añadido : <Nombre> (<fecha>)
+
+Vault global  (~/.claude/nur-ui/)
+  Componentes : <N> componentes
+  Catálogo : <existe / no existe>
+```
+
+---
+
 ## Modos de invocación
 
 El skill se activa por mención explícita o por interceptación:
