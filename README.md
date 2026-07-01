@@ -1,82 +1,257 @@
 # Add Visual Element
 
-Skill global para **Claude Code**. Pipeline de ingesta de CSS/HTML a componente React reutilizable.
+Skill global para **Claude Code** — Pipeline de ingesta de CSS/HTML a componente React reutilizable. Indexa, cataloga, previsualiza y enforcea consistencia visual en cualquier proyecto con librería de componentes.
 
 ## Instalación
 
 ```bash
 # Clonar en el directorio global de skills de Claude Code
-cd ~/.claude/skills && git clone https://github.com/BenitoSeguraGonzalez/add-visual-element.git
+mkdir -p ~/.claude/skills && cd ~/.claude/skills && git clone https://github.com/BenitoSeguraGonzalez/add-visual-element.git
 ```
 
-O si preferís instalarlo dentro de un proyecto específico:
+Instalación dentro de un proyecto específico:
 
 ```bash
-# Clonar en el skills directory del proyecto
 cd tu-proyecto && mkdir -p .claude/skills && git clone https://github.com/BenitoSeguraGonzalez/add-visual-element.git .claude/skills/add-visual-element
 ```
 
-## Verificación
+### Verificación
 
-Para confirmar que el skill se registró correctamente, ejecutá en Claude Code:
+Ejecutá en Claude Code:
 
 ```
 /list-skills
 ```
 
-Debe aparecer `add-visual-element` en la lista. Una vez instalado, el skill se activa automáticamente cuando pedís crear elementos visuales o cuando compartís código CSS/HTML para indexar.
+Debe aparecer `add-visual-element` en la lista. El skill se activa automáticamente al compartir CSS/HTML o al pedir la creación de un elemento visual.
 
-## Uso
+---
 
-### Pipeline completo
+## Funcionalidades
 
-Compartí CSS/HTML y pedí agregarlo a la librería. El skill:
+### Pipeline de ingesta (8 pasos)
 
-1. Detecta automáticamente tu ecosistema (barrel files, design.md, CLAUDE.md)
-2. Extrae y analiza el código fuente
-3. Pregunta nombre, categoría y variantes
-4. Crea el componente React con estilos dinámicos
-5. Genera un preview HTML compilado con esbuild + Tailwind
-6. Indexa en el barrel y actualiza la documentación
-7. Verifica tipos con `tsc --noEmit`
+Cuando compartís código CSS/HTML y pedís agregarlo como componente reutilizable, el skill ejecuta:
 
-### Comandos
+| Paso | Descripción |
+|------|-------------|
+| **-1** | **Interceptación** — Verifica el enforcement registry en `design.md`. Si el UI type ya tiene un componente asignado, lo sugiere en vez de crear uno nuevo. |
+| **0** | **Detección de ecosistema** — Encuentra barrel files, `design.md`, y `CLAUDE.md`. Determina `LIB_DIR`, `LIB_NAME`, y `LIB_IMPORT`. Si no hay librería, ofrece crear una. |
+| **1** | **Extracción de código** — Desde URL (WebFetch) o código pegado. Identifica markup, CSS, variables, keyframes, pseudo-elementos. |
+| **2** | **Clarificación** — 3 preguntas: nombre (PascalCase), categoría (`paneles`, `botones`, `inputs`, `feedback`, `navegacion`, `data-display`, `layout`), y variantes (traducidas a props: `variant`, `size`, `tone`). |
+| **3** | **Creación del componente** — Genera archivo `.tsx` con: estilos dinámicos inline, interface exportada, sin tamaño fijo, atribución si es de terceros (UIverse, etc.). |
+| **3.5** | **Preview** — Compila con esbuild + Tailwind, sirve vía HTTP temporal. Soporta modo gallery (múltiples escenarios) y single (controles interactivos). El usuario **debe** aprobar antes de indexar. |
+| **4** | **Indexación** — Agrega `export { Nombre }` y `export type { NombreProps }` al barrel `index.ts` en orden alfabético. |
+| **5** | **Documentación** — Actualiza `design.md` entre marcadores idempotentes (`<!-- @nur-ui:start catalog -->`). Regenera `manifest.json`. Actualiza enforcement registry si aplica. |
+| **6** | **Verificación** — Ejecuta `npx tsc --noEmit`. Si falla, corrige antes de continuar. Si hay consumidores rotos, reporta y propone fixes. |
+| **7** | **Reporte final** — Archivo creado, categoría, variantes, import path, preview URL, y catálogo actualizado. |
 
-| Comando | Acción |
+### Preview interactivo
+
+Antes de indexar, cada componente se previsualiza en un servidor HTTP temporal:
+
+- **esbuild** compila el `.tsx` con React como externo (CDN)
+- **Tailwind CSS** se compila on-demand usando el `tailwind.config` del proyecto
+- **Puerto**: base 48771, auto-incrementa hasta encontrar libre (máx 10 intentos)
+- **Cleanup**: señal de cierre vía `fetch('/__nur-ui-close')` + TTL cleanup (>1h) en la próxima ejecución
+
+#### Modos
+
+| Modo | Descripción |
+|------|-------------|
+| **Gallery** | Múltiples escenarios en grilla. Cada uno con su label, fondo, y props. Ideal para ver todas las variantes de una vez. |
+| **Single** | Un escenario con panel de controles (selectores, inputs, toggles) para cambiar props en vivo. Ideal para iterar sobre un diseño. |
+
+#### Archivo companion `.preview.tsx`
+
+Opcional. Si existe junto al componente, define escenarios, datos mock, y triggers. Si no existe, el skill auto-genera uno con defaults razonables.
+
+```tsx
+// @nur-ui preview for DragonflyCard
+export const previewMeta = {
+  component: 'DragonflyCard',
+  mode: 'gallery',       // 'gallery' | 'single'
+  viewport: { width: 1200, height: 800 },
+};
+
+export const scenarios = [
+  { label: 'Light', props: { variant: 'light', children: '...' } },
+  { label: 'Dark', props: { variant: 'dark', children: '...' } },
+  { label: 'Amber', props: { variant: 'amber', children: '...' } },
+];
+```
+
+#### Triggers interactivos
+
+| Trigger | Acción |
 |---------|--------|
-| `--check` | Comparar componentes locales contra el vault global. Reporta desactualizaciones. |
-| `--preview <Componente>` | Genera preview visual de un componente existente sin modificar nada. |
-| `--scope global` | Crear componente en el vault global (`~/.claude/nur-ui/`), disponible para todos los proyectos. |
-| `--scope project` | Crear componente solo en el proyecto actual (default). |
+| `button` | Botón en la UI de preview que ejecuta una acción |
+| `toggle` | Toggle boolean que cambia una prop |
+| `hover` | Simula hover en un selector CSS |
+| `click-outside` | Simula click fuera del componente |
 
-### Refactor
+#### Mock data y estados async
 
-Cuando querés reemplazar patrones duplicados por componentes de librería:
+Soporte para componentes que cargan datos asíncronos:
+
+```tsx
+export const mockFetch = {
+  delay: 800,           // ms antes de resolver
+  response: { data: [...] },
+  states: ['loading', 'error', 'empty', 'normal'],
+};
+```
+
+El preview muestra cada estado (skeleton, error, vacío, normal) en tabs para validación visual completa.
+
+### Sistema Vault (global ↔ local)
+
+Un **vault global** en `~/.claude/nur-ui/` actúa como template repository. Ningún proyecto usa componentes globales directamente — siempre se copian al proyecto local.
+
+| Scope | Dónde se crea | Dónde se usa |
+|-------|--------------|-------------|
+| `project` (default) | `<LIB_DIR>/` del proyecto | Solo este proyecto |
+| `global` | `~/.claude/nur-ui/components/` | Se copia a cualquier proyecto bajo demanda |
+
+#### Metadata embebida
+
+Todo componente copiado del vault recibe un header que registra su origen:
+
+```tsx
+// @nur-ui: source=global hash=a1b2c3d4e5f6 copied=2026-07-01 category-global=paneles category-local=contenedores
+```
+
+Componentes creados localmente:
+
+```tsx
+// @nur-ui: source=project created=2026-07-01 category=paneles
+```
+
+#### Comandos del vault
+
+```
+"add-visual-element --check"          → Compara hashes locales vs vault. Reporta desactualizaciones.
+"add-visual-element --update <Comp>"  → Muestra diff, pide confirmación, sincroniza desde vault.
+"promové <Componente> a global"       → Copia un componente local al vault para reutilizarlo en otros proyectos.
+"renombrá <A> a <B>"                  → Operación atómica multi-archivo con diff preview y rollback.
+"eliminá <Componente>"                → Busca consumidores, reporta, no auto-corrige. Usuario decide.
+```
+
+#### Conflictos
+
+Cuando `--check` detecta diferencias entre la versión local y el vault:
+
+1. **Diff unificado** lado a lado
+2. Opciones: usar vault, mantener local, mantener local y desvincular (`source=project`), o merge manual
+3. Si el usuario desvincula, el componente deja de recibir actualizaciones del vault
+
+### Enforcement Registry
+
+Sistema de consistencia visual que impide la duplicación de patrones. Vive en `design.md` entre:
+
+```markdown
+<!-- @nur-ui:start enforcement -->
+| UI Type | Componente | Regla |
+|---------|-----------|-------|
+| KPI Card | KpiCard | Usar KpiCard de NurUI. No crear tarjetas KPI manualmente. |
+| Panel / Card Container | DragonflyCard | Usar DragonflyCard para cualquier contenedor tipo card. |
+<!-- @nur-ui:end enforcement -->
+```
+
+#### Cómo funciona
+
+1. **Interceptación obligatoria** — Antes de crear CUALQUIER elemento visual, se consulta el registry
+2. **Match → usa el componente registrado** — No se permite crear variantes manuales
+3. **No match → crea libremente** — Al finalizar, pregunta si quiere registrar el nuevo UI type
+4. **Precedencia absoluta** — El registry gana sobre cualquier otra sección de `design.md`
+
+#### Auditoría dry-run
 
 ```
 "auditá los componentes visuales del proyecto"
+```
+
+Escanea el proyecto en busca de patrones duplicados, agrupa por similitud estructural, y reporta qué patrones ya tienen componente en NurUI (candidatos a refactor) y cuáles no (candidatos a extraer).
+
+### Refactor quirúrgico
+
+```
 "refactorizá todos los KPI cards para usar KpiCard"
 ```
 
-El skill ejecuta auditoría dry-run, planifica batches independientes, aplica cambios con checkpoint por batch, y permite rollback granular.
+| Fase | Descripción |
+|------|-------------|
+| **1. Auditoría** | Escanea consumidores, identifica variantes necesarias, reporta sin modificar. |
+| **2. Planificación** | Agrupa en batches independientes por UI type. Cada batch es atómico. |
+| **3. Ejecución** | Reemplaza implementación inline → componente. Verifica `tsc --noEmit` por batch. |
+| **4. Checkpoint** | Después de cada batch: tipos limpios + preview de regresión. Usuario confirma. |
+| **5. Rollback** | Si un batch falla: `git checkout` solo ese batch. Batches anteriores intactos. |
+
+### Migración de proyectos existentes
+
+Al correr `add-visual-element` por primera vez en un proyecto con componentes visuales pero sin librería:
+
+1. **Backup** de `design.md` (si existe) → `design.md.bak-YYYYMMDD`
+2. **Inserta marcadores** idempotentes al final sin tocar contenido existente
+3. **Siembra el catálogo** desde componentes detectados en el proyecto
+4. **No crea enforcement rules** — el usuario las define gradualmente
+5. **Reporta**: "N componentes detectados. 0 enforcement rules."
+6. **Validación**: si el usuario rechaza, se restaura el backup.
+
+---
+
+## Comandos
+
+```
+# Pipeline principal (gatillos automáticos)
+"agrega esto a la librería"
+"indexa este componente"
+"onboard this element"
+
+# Scope
+"--scope global"       → vault global, disponible para todos los proyectos
+"--scope project"      → solo proyecto actual (default)
+
+# Vault
+"--check"              → comparar locales vs vault
+"--update <Componente>" → sincronizar desde vault
+
+# Preview standalone
+"--preview <Componente>" → generar preview sin modificar nada
+
+# Refactor y auditoría
+"auditá los componentes visuales"
+"refactorizá todos los <UI type> para usar <Componente>"
+
+# Migración
+"migrá design.md a NurUI"
+```
+
+---
 
 ## Requisitos
 
-El proyecto debe tener disponibles (se usan vía `npx`):
+- **Claude Code** (el skill se registra vía `~/.claude/skills/`)
+- **esbuild** — disponible vía `npx esbuild`
+- **tailwindcss** — disponible en el proyecto o vía `npx tailwindcss`
 
-- `esbuild` — bundling del preview
-- `tailwindcss` — compilación CSS on-demand
+---
 
-## Estructura
+## Arquitectura
 
 ```
 add-visual-element/
 ├── SKILL.md       ← Orquestador: pipeline 0→7, interceptación, comandos
-├── preview.md     ← Preview HTML con esbuild + Tailwind, gallery/single, mockFetch
-├── vault.md       ← Vault global↔local, metadata embebida, conflictos
-├── catalog.md     ← Barrel index, design.md idempotente, manifest.json
-└── enforce.md     ← Enforcement registry, auditoría dry-run, refactor quirúrgico
+├── preview.md     ← Preview HTML con esbuild + Tailwind, gallery/single, triggers, mockFetch
+├── vault.md       ← Vault global↔local, metadata, conflictos, rename, delete, --check
+├── catalog.md     ← Barrel index, design.md idempotente, manifest.json, template React
+├── enforce.md     ← Enforcement registry, auditoría dry-run, refactor quirúrgico, migración
+└── README.md      ← Este archivo
 ```
+
+Cada módulo es autónomo. El orquestador (`SKILL.md`) delega a los módulos según la fase del pipeline.
+
+---
 
 ## Licencia
 
