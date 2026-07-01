@@ -177,9 +177,10 @@ Hacer las 3 en un solo mensaje:
 ### Paso 5: Actualizar documentación
 
 → Delegar a `catalog.md`.
-→ Actualizar `design.md` en bloques delimitados por marcadores.
+→ Actualizar `design.md` en bloques delimitados por marcadores (única fuente de verdad del catálogo).
 → Regenerar `manifest.json`.
 → Si es enforcement, actualizar `<!-- @nur-ui:start enforcement -->`.
+→ No tocar `CLAUDE.md` ni ningún otro `.md` del proyecto — ver `catalog.md § Fuente de verdad del catálogo`.
 
 ### Paso 6: Verificar
 

@@ -94,6 +94,16 @@ export type { StatusBadgeProps } from './StatusBadge';
 
 Quitar ambas líneas (componente + tipo). No dejar gaps.
 
+## Fuente de verdad del catálogo
+
+`docs/design/design.md` es la única fuente de verdad del catálogo NurUI. Los archivos que se actualizan al agregar un componente son exactamente estos tres:
+
+1. `docs/design/design.md` — catálogo + enforcement registry
+2. `<LIB_DIR>/index.ts` — barrel
+3. `~/.claude/nur-ui/vault.json` — vault global (solo si scope=global o ambos)
+
+`CLAUDE.md` es pasarela hacia `design.md` y no se toca. Si `CLAUDE.md` tiene una tabla NurUI, es una referencia mínima de ejemplo — no se modifica. Lo mismo aplica a `README.md` u otros `.md` del proyecto.
+
 ## design.md — Marcadores idempotentes
 
 ### Inicialización (si no existen)
