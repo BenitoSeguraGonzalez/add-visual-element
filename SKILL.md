@@ -27,7 +27,11 @@ El skill se activa por mención explícita o por interceptación:
 | Usuario comparte CSS/HTML + pide agregarlo | Pipeline completo (paso 0→7) |
 | Usuario pide crear elemento visual ("creame un KPI card") | Paso -1 (interceptar) → pipeline si no hay match |
 | `--check` | Escanear locales vs globales (→ vault.md) |
-| `--preview <Componente>` | Solo preview (→ preview.md) |
+| `--preview <Componente>` | Preview completo individual del componente (todos los escenarios, gallery mode) |
+| `--view` | Abrir catálogo persistente existente directamente (→ preview.md) |
+| `--rebuild` | Recompilar todos los componentes y regenerar el catálogo desde cero (→ preview.md) |
+| `--rebuild --scope global` | Rebuild del catálogo global |
+| `--rebuild --scope project` | Rebuild del catálogo local del proyecto (default si no se indica scope) |
 | `--scope global` | Crear en vault global, no en proyecto local |
 | `--scope project` | Crear solo en proyecto local (default) |
 
@@ -78,13 +82,16 @@ Hacer las 3 en un solo mensaje:
 → Reglas: sin tamaño fijo, estilos dinámicos inline, interface exportada, atribución si es de terceros.
 → Ver `catalog.md` para el template completo.
 
-### Paso 3.5: Preview
+### Paso 3.5: Actualizar catálogo persistente
 
 → Delegar a `preview.md`.
-→ Generar `.preview.tsx` companion si el auto-detect no alcanza.
-→ Preview HTML con esbuild + Tailwind on-demand.
-→ El usuario aprueba/rechaza. Si rechaza, editar y re-preview.
-→ **No indexar hasta que el preview sea aprobado.**
+→ Compilar preview del componente nuevo (esbuild + Tailwind). Guardar en `previews/<Nombre>.html`.
+→ Hacer backup atómico del catálogo actual (`catalog.html` → `catalog.html.bak`).
+→ Regenerar `catalog.html` con todos los componentes. El nuevo lleva badge "✦ Último añadido".
+→ Servir el catálogo actualizado al usuario para aprobación.
+→ Si confirma: borrar `.bak`, continuar al Paso 4.
+→ Si rechaza: restaurar `.bak`, el componente NO se indexa.
+→ **No indexar hasta que el catálogo actualizado sea aprobado.**
 
 ### Paso 4: Indexar en barrel
 

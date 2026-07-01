@@ -13,12 +13,20 @@ El vault global es un **template repository**. Los proyectos locales tienen su p
 ```
 ~/.claude/nur-ui/
 ├── vault.json              ← índice de componentes globales
+├── categories.json         ← categorías globales y sus componentes
+├── catalog.html            ← catálogo persistente renderizado (global)
 ├── components/
 │   ├── DragonflyCard.tsx
 │   ├── KpiCard.tsx
 │   └── ...
-└── categories.json         ← categorías globales y sus componentes
+└── previews/               ← preview HTML compilado por componente (srcdoc del catálogo)
+    ├── DragonflyCard.html
+    ├── KpiCard.html
+    └── ...
 ```
+
+El catálogo local del proyecto vive en `<LIB_DIR>/../catalog.html` y `<LIB_DIR>/../previews/`.
+Ejemplo: si `LIB_DIR` es `frontend/src/nur-ui/`, el catálogo es `frontend/src/catalog.html`.
 
 ## vault.json
 
@@ -50,7 +58,8 @@ Usuario: "creá un componente global KpiCard"
 2. Calcular hash (SHA256 de los primeros 1024 bytes del archivo)
 3. Registrar en `vault.json`
 4. Actualizar `categories.json`
-5. Reportar: "Componente `Nombre` creado en vault global. Usá `--scope project` o `--check` para copiarlo a proyectos locales."
+5. Ejecutar Paso 3.5 del pipeline sobre el scope global → actualizar `~/.claude/nur-ui/catalog.html` (→ `preview.md`)
+6. Reportar: "Componente `Nombre` creado en vault global. Usá `--scope project` o `--check` para copiarlo a proyectos locales."
 
 ## Flujo: usar componente global en proyecto
 
