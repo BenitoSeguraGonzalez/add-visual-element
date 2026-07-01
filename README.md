@@ -17,7 +17,7 @@ cd tu-proyecto && mkdir -p .claude/skills && git clone https://github.com/Benito
 
 ### Verificación
 
-Ejecutá en Claude Code:
+Ejecuta en Claude Code:
 
 ```
 /list-skills
@@ -31,11 +31,11 @@ Debe aparecer `add-visual-element` en la lista. El skill se activa automáticame
 
 ### Pipeline de ingesta (8 pasos)
 
-Cuando compartís código CSS/HTML y pedís agregarlo como componente reutilizable, el skill ejecuta:
+Cuando compartes código CSS/HTML y pides agregarlo como componente reutilizable, el skill ejecuta:
 
 | Paso | Descripción |
 |------|-------------|
-| **-1** | **Interceptación** — Verifica el enforcement registry en `design.md`. Si el UI type ya tiene un componente asignado, lo sugiere en vez de crear uno nuevo. |
+| **-1** | **Interceptación** — Verifica el enforcement registry en `design.md`. Si el UI type ya tiene un componente asignado, lo sugiere en lugar de crear uno nuevo. |
 | **0** | **Detección de ecosistema** — Encuentra barrel files, `design.md`, y `CLAUDE.md`. Determina `LIB_DIR`, `LIB_NAME`, y `LIB_IMPORT`. Si no hay librería, ofrece crear una. |
 | **1** | **Extracción de código** — Desde URL (WebFetch) o código pegado. Identifica markup, CSS, variables, keyframes, pseudo-elementos. |
 | **2** | **Clarificación** — 3 preguntas: nombre (PascalCase), categoría (`paneles`, `botones`, `inputs`, `feedback`, `navegacion`, `data-display`, `layout`), y variantes (traducidas a props: `variant`, `size`, `tone`). |
@@ -59,7 +59,7 @@ Antes de indexar, cada componente se previsualiza en un servidor HTTP temporal:
 
 | Modo | Descripción |
 |------|-------------|
-| **Gallery** | Múltiples escenarios en grilla. Cada uno con su label, fondo, y props. Ideal para ver todas las variantes de una vez. |
+| **Gallery** | Múltiples escenarios en cuadrícula. Cada uno con su label, fondo, y props. Ideal para ver todas las variantes de una vez. |
 | **Single** | Un escenario con panel de controles (selectores, inputs, toggles) para cambiar props en vivo. Ideal para iterar sobre un diseño. |
 
 #### Archivo companion `.preview.tsx`
@@ -132,9 +132,9 @@ Componentes creados localmente:
 ```
 "add-visual-element --check"          → Compara hashes locales vs vault. Reporta desactualizaciones.
 "add-visual-element --update <Comp>"  → Muestra diff, pide confirmación, sincroniza desde vault.
-"promové <Componente> a global"       → Copia un componente local al vault para reutilizarlo en otros proyectos.
-"renombrá <A> a <B>"                  → Operación atómica multi-archivo con diff preview y rollback.
-"eliminá <Componente>"                → Busca consumidores, reporta, no auto-corrige. Usuario decide.
+"Promueve <Componente> a global"       → Copia un componente local al vault para reutilizarlo en otros proyectos.
+"Renombra <A> a <B>"                  → Operación atómica multi-archivo con diff preview y rollback.
+"Elimina <Componente>"                → Busca consumidores, reporta, no auto-corrige. Usuario decide.
 ```
 
 #### Conflictos
@@ -168,7 +168,7 @@ Sistema de consistencia visual que impide la duplicación de patrones. Vive en `
 #### Auditoría dry-run
 
 ```
-"auditá los componentes visuales del proyecto"
+"audita los componentes visuales del proyecto"
 ```
 
 Escanea el proyecto en busca de patrones duplicados, agrupa por similitud estructural, y reporta qué patrones ya tienen componente en NurUI (candidatos a refactor) y cuáles no (candidatos a extraer).
@@ -176,7 +176,7 @@ Escanea el proyecto en busca de patrones duplicados, agrupa por similitud estruc
 ### Refactor quirúrgico
 
 ```
-"refactorizá todos los KPI cards para usar KpiCard"
+"refactoriza todos los KPI cards para usar KpiCard"
 ```
 
 | Fase | Descripción |
@@ -220,11 +220,11 @@ Al correr `add-visual-element` por primera vez en un proyecto con componentes vi
 "--preview <Componente>" → generar preview sin modificar nada
 
 # Refactor y auditoría
-"auditá los componentes visuales"
-"refactorizá todos los <UI type> para usar <Componente>"
+"audita los componentes visuales"
+"refactoriza todos los <UI type> para usar <Componente>"
 
 # Migración
-"migrá design.md a NurUI"
+"migra design.md a NurUI"
 ```
 
 ---
