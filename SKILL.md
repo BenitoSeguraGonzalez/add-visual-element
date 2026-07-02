@@ -173,6 +173,7 @@ Hacer las 3 en un solo mensaje:
 
 → Delegar a `catalog.md`.
 → Agregar export al `index.ts` en orden alfabético.
+→ **OBLIGATORIO**: agregar entrada vacía `"usages": []` en `component-map.json` para el componente nuevo (→ `catalog.md § component-map.json`).
 
 ### Paso 5: Actualizar documentación
 
@@ -200,7 +201,10 @@ Componente `<Nombre>` integrado en <LIB_NAME>.
 - Import: import { <Nombre> } from '<LIB_IMPORT>'
 - Preview: <URL temporal>
 - Catálogo: actualizado en <DESIGN_MD>
+- component-map.json: actualizado (<N> usages registrados)
 ```
+
+**OBLIGATORIO en sustituciones masivas**: tras reemplazar instancias existentes por el componente, escanear cada archivo modificado, extraer línea exacta de cada `<NombreComponente`, y actualizar `usages` en `component-map.json` antes de cerrar el reporte. Sin este paso el reporte no está completo.
 
 ## Scope: global vs project
 

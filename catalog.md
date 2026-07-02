@@ -164,6 +164,68 @@ Mismo mecanismo: editar entre `<!-- @nur-ui:start enforcement -->` y `<!-- @nur-
 <!-- @nur-ui:end enforcement -->
 ```
 
+## component-map.json — LEY DE OBLIGADO CUMPLIMIENTO
+
+> **NUNCA ignorar. NUNCA saltar. Aplica en toda operación del skill sin excepción.**
+
+`component-map.json` es el mapa de uso exacto de cada componente NurUI en el proyecto.
+Vive en `<LIB_DIR>/component-map.json`. Se genera al crear la librería y se actualiza en TODA operación posterior.
+
+### Cuándo actualizar (SIEMPRE)
+
+| Operación | Acción sobre component-map.json |
+|-----------|--------------------------------|
+| Crear componente nuevo | Agregar entrada con `usages: []` |
+| Sustituir elemento existente por componente NurUI | Agregar cada instancia reemplazada a `usages` del componente |
+| Eliminar componente | Eliminar su entrada completa |
+| Renombrar componente | Renombrar su clave |
+| Detectar nuevo consumidor al correr `--check` | Agregar a `usages` del componente correspondiente |
+
+### Estructura
+
+```json
+{
+  "generated": "ISO-8601",
+  "library": "NurUI",
+  "lib_dir": "frontend/src/nur-ui/",
+  "lib_import": "@/nur-ui",
+  "_note": "Auto-generado por add-visual-element. NUNCA editar manualmente.",
+  "components": {
+    "DragonflyCard": {
+      "usages": [
+        {
+          "file": "modules/superadmin/components/SuperAdminKpiCard.tsx",
+          "line": 28,
+          "context": "descripción breve del uso en ese punto"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Reglas de contenido
+
+- `file`: ruta relativa desde `frontend/src/`
+- `line`: línea del JSX `<ComponenteName` (no el import, la instancia)
+- `context`: 1 frase que describe qué hace el componente en ese punto
+- Si el componente no tiene usages aún → `"usages": []` (nunca omitir la entrada)
+- `generated` se actualiza con cada escritura
+
+### Cómo detectar usages
+
+```bash
+# Encontrar todos los archivos que importan desde @/nur-ui
+rg "from '@/nur-ui'" --glob "*.tsx" --glob "*.ts" -l
+
+# Para cada archivo, encontrar línea de JSX de cada componente
+rg "<NombreComponente[\s>]" --glob "*.tsx" -n
+```
+
+Tras una sustitución masiva: escanear todos los archivos modificados y actualizar `usages` con archivo + línea + contexto de cada instancia nueva.
+
+---
+
 ## manifest.json
 
 Auto-generado después de cada operación del skill. Vive en `<LIB_DIR>/manifest.json`.
